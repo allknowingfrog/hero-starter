@@ -405,7 +405,7 @@ helpers.safeMove = function(x, y) {
 };
 
 helpers.nearest = function(test) {
-    var search, path;
+    var path;
     var distance = helpers.tiles.length * helpers.tiles[0].length;
     var move = 'Stay';
     for(var x=0; x<helpers.tiles.length; x++) {
@@ -458,7 +458,7 @@ helpers.nearestHealth = function() {
 };
 
 helpers.nearestFrom = function(tile, test) {
-    var search, path;
+    var path;
     var distance = helpers.tiles.length * helpers.tiles[0].length;
     var move = 'Stay';
     for(var x=0; x<helpers.tiles.length; x++) {
@@ -515,7 +515,7 @@ helpers.potentialDamage = function(x, y) {
     if(threats.length == 0) return damage;
 
     //check for gap in diagonal enemies
-    var look, check;
+    var tile, look, check;
     for(var t in threats) {
         dir = threats[t];
         tile = helpers.moveDirection(x, y, dir);
