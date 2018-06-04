@@ -19,6 +19,7 @@ helpers.init = function(data) {
     var x = data.activeHero.distanceFromLeft;
     var y = data.activeHero.distanceFromTop;
     helpers.hero = helpers.tiles[x][y];
+    helpers.maxDistance = helpers.tiles.length * helpers.tiles[0].length;
 };
 
 helpers.coordFix = function(tiles) {
@@ -137,10 +138,12 @@ helpers.pathTo = function(x, y) {
             dirs[adj][0] = adjacent[adj];
         }
     }
+
     var paths, search;
     var front = [];
-    while(true) {
+    while(distance < helpers.maxDistance) {
         distance++;
+
         for(var d in dirs) {
             paths = dirs[d];
             for(var p in paths) {
@@ -168,14 +171,17 @@ helpers.pathTo = function(x, y) {
                 delete dirs[d];
             }
             if(JSON.stringify(dirs) == '{}') { //no path to objective
-                var out = {
-                    'move': 'Stay',
-                    'distance': distance
-                };
-                return out;
+                break;
             }
         }
     }
+
+    var out = {
+        'move': 'Stay',
+        'distance': distance
+    };
+
+    return out;
 };
 
 helpers.pathFromTo = function(tile, x, y) {
@@ -189,16 +195,20 @@ helpers.pathFromTo = function(tile, x, y) {
                 'move': adj,
                 'distance': distance
             };
+
             return out;
+
         } else if(helpers.getTileType(adjacent[adj]) == 'empty') {
             dirs[adj] = [];
             dirs[adj][0] = adjacent[adj];
         }
     }
+
     var paths, search;
     var front = [];
-    while(true) {
+    while(distance < helpers.maxDistance) {
         distance++;
+
         for(var d in dirs) {
             paths = dirs[d];
             for(var p in paths) {
@@ -210,7 +220,9 @@ helpers.pathFromTo = function(tile, x, y) {
                             'move': d,
                             'distance': distance
                         };
+
                         return out;
+
                     } else if(visited.indexOf(search) != -1) {
                         continue; //already have a path to this tile
                     } else if(helpers.getTileType(search) == 'empty') {
@@ -219,21 +231,26 @@ helpers.pathFromTo = function(tile, x, y) {
                     }
                 }
             }
+
             if(front.length) { //direction still has valid paths
                 dirs[d] = front.slice(0);
                 front = [];
             } else { //all paths in this direction have dead ends
                 delete dirs[d];
             }
+
             if(JSON.stringify(dirs) == '{}') { //no path to objective
-                var out = {
-                    'move': 'Stay',
-                    'distance': distance
-                };
-                return out;
+                break;
             }
         }
     }
+
+    var out = {
+        'move': 'Stay',
+        'distance': distance
+    };
+
+    return out;
 };
 
 helpers.isCamping = function(x, y) {
@@ -302,7 +319,7 @@ helpers.bestPassiveAttack = function() {
     var weakest = 101;
     var move = 'Stay';
     var enemy;
-    var healthDistance = helpers.tiles.length * helpers.tiles[0].length;
+    var healthDistance = helpers.maxDistance;
 
     var oneAway;
     for(var d in adj) {
@@ -406,7 +423,7 @@ helpers.safeMove = function(x, y) {
 
 helpers.nearest = function(test) {
     var path;
-    var distance = helpers.tiles.length * helpers.tiles[0].length;
+    var distance = helpers.maxDistance;
     var move = 'Stay';
     for(var x=0; x<helpers.tiles.length; x++) {
         for(var y=0; y<helpers.tiles[x].length; y++) {
@@ -459,7 +476,7 @@ helpers.nearestHealth = function() {
 
 helpers.nearestFrom = function(tile, test) {
     var path;
-    var distance = helpers.tiles.length * helpers.tiles[0].length;
+    var distance = helpers.maxDistance;
     var move = 'Stay';
     for(var x=0; x<helpers.tiles.length; x++) {
         for(var y=0; y<helpers.tiles[x].length; y++) {
@@ -472,6 +489,7 @@ helpers.nearestFrom = function(tile, test) {
             }
         }
     }
+
     return {
         'move': move,
         'distance': distance
@@ -479,7 +497,7 @@ helpers.nearestFrom = function(tile, test) {
 };
 
 helpers.nearestHealthFrom = function(tile) {
-    var out = helpers.nearestFrom(tile, function(x, y){
+    var out = helpers.nearestFrom(tile, function(x, y) {
         return (helpers.getTileType(helpers.tiles[x][y]) == 'health');
     });
 
@@ -495,6 +513,7 @@ helpers.isTileSafe = function(x, y) {
             return false;
         }
     }
+
     return true;
 };
 
