@@ -16,10 +16,10 @@ helpers.diagonals = {
 
 helpers.init = function(data) {
     helpers.tiles = helpers.coordFix(data.board.tiles);
+    helpers.maxDistance = helpers.tiles.length * helpers.tiles[0].length;
     var x = data.activeHero.distanceFromLeft;
     var y = data.activeHero.distanceFromTop;
     helpers.hero = helpers.tiles[x][y];
-    helpers.maxDistance = helpers.tiles.length * helpers.tiles[0].length;
 };
 
 helpers.coordFix = function(tiles) {
@@ -37,6 +37,7 @@ helpers.coordFix = function(tiles) {
             fixed[x][y].y = tile.distanceFromTop;
         }
     }
+
     return fixed;
 };
 
@@ -47,6 +48,7 @@ helpers.chooseRandom = function(array) {
 helpers.inBounds = function(x, y) {
     var w = helpers.tiles.length;
     var h = helpers.tiles[0].length;
+
     return (x >= 0 && x < w && y >= 0 && y < h);
 };
 
@@ -67,9 +69,12 @@ helpers.rotateDirection = function(dir, rotation) {
     index += rotation;
     if(index >= dirs.length) {
         index -= dirs.length;
-    } else if(index < 0) {
-        index += dirs.length;
+    } else {
+        while(index < 0) {
+          index += dirs.length;
+        }
     }
+
     return dirs[index];
 };
 
@@ -84,6 +89,7 @@ helpers.getAdjacent = function(x, y) {
             adj[d] = helpers.tiles[xx][yy];
         }
     }
+
     return adj;
 };
 
@@ -98,90 +104,33 @@ helpers.getDiagonal = function(x, y) {
             adj[d] = helpers.tiles[xx][yy];
         }
     }
+
     return adj;
 };
 
 helpers.getTileType = function(tile) {
-    if(tile.type == 'Hero') {
-        if(tile.team == helpers.hero.team) {
-            return 'ally';
-        } else {
-            return 'enemy';
-        }
-    } else if(tile.type == 'HealthWell') {
+    switch(tile.type) {
+      case 'Hero':
+        return tile.team == helpers.hero.team ? 'ally' : 'enemy';
+
+      case 'HealthWell':
         return 'health';
-    } else if(tile.type == 'DiamondMine') {
+
+      case 'DiamondMine':
         return 'mine';
-    } else if(tile.type == 'Impassable') {
+
+      case 'Impassable':
         return 'tree';
-    } else if(tile.type == 'Unoccupied') {
-        return 'empty';
-    } else {
+
+      case 'Unoccupied':
         return 'empty';
     }
+
+    return 'empty';
 };
 
 helpers.pathTo = function(x, y) {
-    var visited = [helpers.hero];
-    var distance = 0;
-    var dirs = {};
-    var adjacent = helpers.getAdjacent(helpers.hero.x, helpers.hero.y);
-    for(var adj in adjacent) {
-        if(adjacent[adj].x == x && adjacent[adj].y == y) {
-            var out = { //already adjacent to objective
-                'move': adj,
-                'distance': distance
-            };
-            return out;
-        } else if(helpers.getTileType(adjacent[adj]) == 'empty') {
-            dirs[adj] = [];
-            dirs[adj][0] = adjacent[adj];
-        }
-    }
-
-    var paths, search;
-    var front = [];
-    while(distance < helpers.maxDistance) {
-        distance++;
-
-        for(var d in dirs) {
-            paths = dirs[d];
-            for(var p in paths) {
-                adjacent = helpers.getAdjacent(paths[p].x, paths[p].y);
-                for(var adj in adjacent) {
-                    search = adjacent[adj];
-                    if(search.x == x && search.y == y) {
-                        var out = { //found shortest path to objective
-                            'move': d,
-                            'distance': distance
-                        };
-                        return out;
-                    } else if(visited.indexOf(search) != -1) {
-                        continue; //already have a path to this tile
-                    } else if(helpers.getTileType(search) == 'empty') {
-                        front[front.length] = search;
-                        visited[visited.length] = search;
-                    }
-                }
-            }
-            if(front.length) { //direction still has valid paths
-                dirs[d] = front.slice(0);
-                front = [];
-            } else { //all paths in this direction have dead ends
-                delete dirs[d];
-            }
-            if(JSON.stringify(dirs) == '{}') { //no path to objective
-                break;
-            }
-        }
-    }
-
-    var out = {
-        'move': 'Stay',
-        'distance': distance
-    };
-
-    return out;
+    return helpers.pathFromTo(helpers.hero, x, y);
 };
 
 helpers.pathFromTo = function(tile, x, y) {
@@ -199,14 +148,18 @@ helpers.pathFromTo = function(tile, x, y) {
             return out;
 
         } else if(helpers.getTileType(adjacent[adj]) == 'empty') {
-            dirs[adj] = [];
-            dirs[adj][0] = adjacent[adj];
+            dirs[adj] = [adjacent[adj]];
+            visited.push(adjacent[adj]);
         }
     }
 
     var paths, search;
     var front = [];
     while(distance < helpers.maxDistance) {
+        if(JSON.stringify(dirs) == '{}') { //no path to objective
+            break;
+        }
+
         distance++;
 
         for(var d in dirs) {
@@ -226,8 +179,8 @@ helpers.pathFromTo = function(tile, x, y) {
                     } else if(visited.indexOf(search) != -1) {
                         continue; //already have a path to this tile
                     } else if(helpers.getTileType(search) == 'empty') {
-                        front[front.length] = search;
-                        visited[visited.length] = search;
+                        front.push(search);
+                        visited.push(search);
                     }
                 }
             }
@@ -237,10 +190,6 @@ helpers.pathFromTo = function(tile, x, y) {
                 front = [];
             } else { //all paths in this direction have dead ends
                 delete dirs[d];
-            }
-
-            if(JSON.stringify(dirs) == '{}') { //no path to objective
-                break;
             }
         }
     }
@@ -380,11 +329,11 @@ helpers.getSafeMoves = function() {
     var adj = helpers.getAdjacent(helpers.hero.x, helpers.hero.y);
     var safe = [];
     if(helpers.safeMove(helpers.hero.x, helpers.hero.y)) {
-        safe[safe.length] = 'Stay';
+        safe.push('Stay');
     }
     for(var d in adj) {
         if(helpers.safeMove(adj[d].x, adj[d].y)) {
-            safe[safe.length] = d;
+            safe.push(d);
         }
     }
     return safe;
@@ -526,7 +475,7 @@ helpers.potentialDamage = function(x, y) {
     for(var dir in adj) {
         type = helpers.getTileType(adj[dir]);
         if(type == 'empty' || adj[dir] == 'hero') {
-            threats[threats.length] = dir;
+            threats.push(dir);
         } else if(type == 'enemy' && adj[dir].health > 20) {
             damage += 30;
         }
@@ -558,20 +507,20 @@ helpers.potentialDamage = function(x, y) {
                 check = helpers.moveDirection(tile.x, tile.y, look);
                 if(check && helpers.getTileType(check) == 'enemy' && used.indexOf(check) == -1) {
                     damage += 20;
-                    used[used.length] = check;
+                    used.push(check);
                     continue;
                 }
                 check = helpers.moveDirection(tile.x, tile.y, dir);
                 if(check && helpers.getTileType(check) == 'enemy' && used.indexOf(check) == -1) {
                     damage += 20;
-                    used[used.length] = check;
+                    used.push(check);
                     continue;
                 }
                 look = helpers.rotateDirection(dir, 1);
                 check = helpers.moveDirection(tile.x, tile.y, look);
                 if(check && helpers.getTileType(check) == 'enemy' && used.indexOf(check) == -1) {
                     damage += 20;
-                    used[used.length] = check;
+                    used.push(check);
                     continue;
                 }
             }
@@ -579,6 +528,39 @@ helpers.potentialDamage = function(x, y) {
         }
     }
     return damage;
+};
+
+helpers.pathInspect = function(start, end_x, end_y, dirs, visited) {
+  var debug = [];
+  for(var x=0; x<helpers.tiles.length; x++) {
+    debug[x] = [];
+    for(var y=0; y<helpers.tiles[0].length; y++) {
+      debug[x][y] = '+';
+    }
+  }
+
+  for(var v in visited) {
+    debug[visited[v].x][visited[v].y] = ' ';
+  }
+
+  debug[start.x][start.y] = 'A';
+  debug[end_x][end_y] = 'B';
+
+  for(var d in dirs) {
+    for(var p in dirs[d]) {
+      tile = dirs[d][p];
+      debug[tile.x][tile.y] = 'X';
+    }
+  }
+
+  for(var y=0; y<debug[0].length; y++) {
+    var line = '';
+    for(var x=0; x<debug.length; x++) {
+      line += debug[x][y];
+    }
+    console.log(line)
+  }
+  console.log('');
 };
 
 module.exports = helpers;

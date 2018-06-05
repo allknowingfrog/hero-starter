@@ -1,26 +1,20 @@
-/*
+/**
 
-If you'd like to test your hero code locally,
-run this code using node (must have node installed).
+If you'd like to test your hero code locally, run this script using node.
 
-Please note that you DO NOT need to do this to enter javascript
-battle, it is simply an easy way to test whether your new hero
-code will work in the javascript battle.
+While you do not need to run this script to enter the battle, it is highly
+recommended that you run a few test battles to ensure your hero is working as
+you intended.
 
-To run:
-
-  -Install node
-  -Run the following in your terminal:
-
-    node test_your_hero_code.js
-
-  -If you don't see any errors in your terminal, the code works!
+See README.md for more information.
 
 */
 
-// potentail cli options, and their default values
-let cliOptions = { wait: false,
-                   turns: 15 };
+// possible cli options, and their default values
+let cliOptions = {
+    wait: false,
+    turns: 15
+};
 
 // accepting cli parameters
 var args = require('commander');
@@ -54,6 +48,7 @@ var heroMoveFunction = require('./hero.js');
 // The move function ("brain") the practice enemy will use
 var enemyMoveFunction = function (gameData, helpers) {
     // Move in a random direction
+
     var choices = ['North', 'South', 'East', 'West'];
 
     return choices[Math.floor(Math.random()*4)];
@@ -63,6 +58,8 @@ var currentTurn = 0;
 
 // Makes a new game with a 5x5 board
 var game = new Game(5);
+
+game.maxTurn = cliOptions.turns;
 
 /**
  * Sets up the game's enviroment and adds heroes, displays startup summary
@@ -78,7 +75,7 @@ function gameSetup () {
     // Add your hero in the top left corner of the map (team 0)
     game.addHero(0, 0, 'MyHero', 0);
 
-    // Add an enemy hero in the bottom left corner of the map (team 1)
+    // Add an enemy hero in the bottom right corner of the map (team 1)
     game.addHero(4, 4, 'Enemy', 1);
 
     if (cliOptions.wait){ // wait mode
