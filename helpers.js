@@ -71,7 +71,7 @@ helpers.rotateDirection = function(dir, rotation) {
         index -= dirs.length;
     } else {
         while(index < 0) {
-          index += dirs.length;
+            index += dirs.length;
         }
     }
 
@@ -531,36 +531,38 @@ helpers.potentialDamage = function(x, y) {
 };
 
 helpers.pathInspect = function(start, end_x, end_y, dirs, visited) {
-  var debug = [];
-  for(var x=0; x<helpers.tiles.length; x++) {
-    debug[x] = [];
-    for(var y=0; y<helpers.tiles[0].length; y++) {
-      debug[x][y] = '+';
+    var debug = [];
+    for(var x=0; x<helpers.tiles.length; x++) {
+        debug[x] = [];
+        for(var y=0; y<helpers.tiles[0].length; y++) {
+            debug[x][y] = '+';
+        }
     }
-  }
 
-  for(var v in visited) {
-    debug[visited[v].x][visited[v].y] = ' ';
-  }
-
-  debug[start.x][start.y] = 'A';
-  debug[end_x][end_y] = 'B';
-
-  for(var d in dirs) {
-    for(var p in dirs[d]) {
-      tile = dirs[d][p];
-      debug[tile.x][tile.y] = 'X';
+    for(var v in visited) {
+        debug[visited[v].x][visited[v].y] = ' ';
     }
-  }
 
-  for(var y=0; y<debug[0].length; y++) {
-    var line = '';
-    for(var x=0; x<debug.length; x++) {
-      line += debug[x][y];
+    debug[start.x][start.y] = 'A';
+    debug[end_x][end_y] = 'B';
+
+    var tile;
+    for(var d in dirs) {
+        for(var p in dirs[d]) {
+            tile = dirs[d][p];
+            debug[tile.x][tile.y] = 'X';
+        }
     }
-    console.log(line)
-  }
-  console.log('');
+
+    var line;
+    for(var y=0; y<debug[0].length; y++) {
+        line = '';
+        for(var x=0; x<debug.length; x++) {
+            line += debug[x][y];
+        }
+        console.log(line);
+    }
+    console.log('');
 };
 
 module.exports = helpers;
