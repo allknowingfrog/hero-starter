@@ -1,64 +1,51 @@
-// Strategy definitions
-var moves = {
-    test: function(gameData, helpers) {
-        helpers.init(gameData);
+module.exports = function(gameData, helpers) {
+    helpers.init(gameData);
 
-        console.log(helpers.nearestHealthFrom(helpers.tiles[2][3]).distance);
-        return "Stay";
-    },
-    heroChicken: function(gameData, helpers) {
-        helpers.init(gameData);
+    var direct = helpers.bestDirectAttack();
+    if(direct.kill) {
+        return direct.move;
+    }
 
-        var direct = helpers.bestDirectAttack();
-        if(direct.kill) {
-            return direct.move;
-        }
+    var passive = helpers.bestPassiveAttack();
+    if(passive.kill) {
+        return passive.move;
+    }
 
-        var passive = helpers.bestPassiveAttack();
-        if(passive.kill) {
-            return passive.move;
-        }
+    if(direct.move != 'Stay') {
+        return direct.move;
+    }
 
-        if(direct.move != 'Stay') {
-            return direct.move;
-        }
+    if(passive.move != 'Stay') {
+        return passive.move;
+    }
 
-        if(passive.move != 'Stay') {
-            return passive.move;
-        }
+    var heal = helpers.bestHeal();
+    if(heal.move != 'Stay') {
+        return heal.move;
+    }
 
-        var heal = helpers.bestHeal();
-        if(heal.move != 'Stay') {
-            return heal.move;
-        }
-
-        var safe = helpers.getSafeMoves();
-        var option;
-        if(safe.length) {
-            if(helpers.hero.health < 100) {
-                option = helpers.nearestHealth();
-                if(safe.indexOf(option.move) != -1) {
+    var safe = helpers.getSafeMoves();
+    var option;
+    if(safe.length) {
+        if(helpers.hero.health < 100) {
+            option = helpers.nearestHealth();
+            if(safe.indexOf(option.move) != -1) {
+                return option.move;
+            } else if(option.distance <= 1) {
+                var tile = helpers.moveDirection(helpers.hero.x, helpers.hero.y, option.move);
+                if(helpers.potentialDamage(tile.x, tile.y) < helpers.hero.health) {
                     return option.move;
-                } else if(option.distance <= 1) {
-                    var tile = helpers.moveDirection(helpers.hero.x, helpers.hero.y, option.move);
-                    if(helpers.potentialDamage(tile.x, tile.y) < helpers.hero.health) {
-                        return option.move;
-                    }
                 }
             }
-            option = helpers.nearestWeakerNoCamp();
-            if(safe.indexOf(option.move) != -1 || gameData.turn > 1000) {
-                return option.move;
-            }
-            //return helpers.chooseRandom(safe);
-            return safe[0];
-        } else {
-            return 'Stay';
         }
+        option = helpers.nearestWeakerNoCamp();
+        if(safe.indexOf(option.move) != -1 || gameData.turn > 1000) {
+            return option.move;
+        }
+
+        return safe[0];
+
+    } else {
+        return 'Stay';
     }
 };
-
-var move = moves.heroChicken;
-//var move = moves.test;
-
-module.exports = move;
